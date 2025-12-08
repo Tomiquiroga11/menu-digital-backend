@@ -1,0 +1,16 @@
+# Archivos compilados
+bin/
+obj/
+
+# Archivos de configuración de usuario
+*.user
+*.userosscache
+*.suo
+
+# Carpetas de Rider/IntelliJ
+.idea/
+
+# Base de datos SQLite (¡No subir esto!)
+*.db
+*.db-shm
+*.db-wal

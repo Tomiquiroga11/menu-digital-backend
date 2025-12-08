@@ -1,5 +1,5 @@
 using MenuDigital.Api.Models;
-using MenuDigital.Api.Services.Interfaces; // Asegúrate que apunte a tu interfaz de Servicio
+using MenuDigital.Api.Services.Interfaces; 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;

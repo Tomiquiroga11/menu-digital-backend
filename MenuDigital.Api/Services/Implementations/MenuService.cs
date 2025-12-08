@@ -119,7 +119,7 @@ namespace MenuDigital.Api.Services.Implementations
             var categoria = await GetCategoriaSimpleAsync(dto.CategoriaId, restauranteId);
             if (categoria == null)
             {
-                return null; // Categoría no encontrada o no pertenece al usuario
+                return null; 
             }
 
             var producto = new Producto
@@ -137,7 +137,7 @@ namespace MenuDigital.Api.Services.Implementations
             _menuRepository.AddProducto(producto);
             await _unitOfWork.SaveChangesAsync();
             
-            return producto.ToDto(); // <-- Usa el Mapper
+            return producto.ToDto(); 
         }
 
         public async Task<bool> UpdateProductoAsync(int productoId, ProductoUpdateDto dto, int restauranteId)
@@ -145,17 +145,16 @@ namespace MenuDigital.Api.Services.Implementations
             var categoriaDestino = await _menuRepository.GetCategoriaByIdAsync(dto.CategoriaId);
             if (categoriaDestino == null || categoriaDestino.RestauranteId != restauranteId)
             {
-                return false; // Categoría destino no existe o no es del usuario
+                return false; 
             }
             
             var producto = await _menuRepository.GetProductoByIdAsync(productoId);
             if (producto == null) return false;
 
-            // ESTA ES LA LÍNEA QUE TENÍAS MAL (Llamaba a GetProductoByIdAsync)
             var categoriaActual = await _menuRepository.GetCategoriaByIdAsync(producto.CategoriaId);
             if (categoriaActual == null || categoriaActual.RestauranteId != restauranteId)
             {
-                return false; // El producto no pertenece a este restaurante
+                return false; 
             }
             
             producto.Nombre = dto.Nombre;

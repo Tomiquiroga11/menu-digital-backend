@@ -45,8 +45,8 @@ public static class MappingExtensions
             Nombre = producto.Nombre,
             Descripcion = producto.Descripcion,
         
-            Precio = precioFinal, // Enviamos el precio ya calculado
-            PrecioOriginal = precioOriginal, // Enviamos el original solo si cambió
+            Precio = precioFinal, 
+            PrecioOriginal = precioOriginal,
         
             EstaDestacado = producto.EstaDestacado,
             TieneDescuento = producto.TieneDescuento,

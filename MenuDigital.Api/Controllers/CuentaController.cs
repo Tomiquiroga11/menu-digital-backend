@@ -8,13 +8,11 @@ namespace MenuDigital.Api.Controllers
 {
     [ApiController]
     [Route("api/cuenta")]
-    [Authorize] // Solo dueños logueados
+    [Authorize] 
     public class CuentaController : ControllerBase
     {
         private readonly IRestauranteService _restauranteService;
-        // Necesitarás agregar métodos de Update y Delete en tu servicio si no existen
-        // Por simplicidad del ejemplo, asumo que los agregarás al IRestauranteService
-
+        
         public CuentaController(IRestauranteService restauranteService)
         {
             _restauranteService = restauranteService;
@@ -29,7 +27,6 @@ namespace MenuDigital.Api.Controllers
         public async Task<IActionResult> UpdateCuenta([FromBody] RegistroRestauranteDto dto)
         {
             var id = GetRestauranteId();
-            // Implementa UpdateRestauranteAsync en tu servicio
             var exito = await _restauranteService.UpdateRestauranteAsync(id, dto);
             if (!exito) return BadRequest("No se pudo actualizar.");
             return NoContent();
@@ -39,7 +36,6 @@ namespace MenuDigital.Api.Controllers
         public async Task<IActionResult> DeleteCuenta()
         {
             var id = GetRestauranteId();
-            // Implementa DeleteRestauranteAsync en tu servicio
             var exito = await _restauranteService.DeleteRestauranteAsync(id);
             if (!exito) return BadRequest("No se pudo eliminar.");
             return NoContent();

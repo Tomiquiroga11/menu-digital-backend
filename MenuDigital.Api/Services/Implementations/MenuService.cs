@@ -12,12 +12,22 @@ namespace MenuDigital.Api.Services.Implementations
         private readonly IRestauranteRepository _restauranteRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        
         public MenuService(IMenuRepository menuRepository, IRestauranteRepository restauranteRepository, IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor)
         {
             _menuRepository = menuRepository;
             _restauranteRepository = restauranteRepository;
             _unitOfWork = unitOfWork;
             _httpContextAccessor = httpContextAccessor;
+        }
+
+        private async Task<bool> VerificarSiEsHappyHour(int restauranteId)
+        {
+            var restaurante = await _restauranteRepository.GetRestauranteByIdAsync(restauranteId);
+            if (restaurante == null) return false;
+
+            var horaActual = DateTime.Now.Hour;
+            return horaActual >= restaurante.HappyHourInicio && horaActual < restaurante.HappyHourFin;
         }
 
         public async Task<MenuCompletoDto?> GetMenuCompletoAsync(int restauranteId)
@@ -29,12 +39,14 @@ namespace MenuDigital.Api.Services.Implementations
             }
 
             var user = _httpContextAccessor.HttpContext?.User;
-
             if (user == null || user.Identity == null || !user.Identity.IsAuthenticated)
             {
                 restaurante.Visitas++;
                 await _unitOfWork.SaveChangesAsync();
             }
+
+            var horaActual = DateTime.Now.Hour;
+            bool esHappyHour = horaActual >= restaurante.HappyHourInicio && horaActual < restaurante.HappyHourFin;
 
             var categoriasConProductos = await _menuRepository.GetCategoriasConProductosAsync(restauranteId);
 
@@ -46,7 +58,7 @@ namespace MenuDigital.Api.Services.Implementations
                 {
                     Id = c.Id,
                     Nombre = c.Nombre,
-                    Productos = c.Productos.Select(p => p.ToDto()).ToList() // <-- Usa el Mapper
+                    Productos = c.Productos.Select(p => p.ToDto(esHappyHour)).ToList() 
                 }).ToList()
             };
             return menuDto;
@@ -73,11 +85,8 @@ namespace MenuDigital.Api.Services.Implementations
             var categoria = await _menuRepository.GetCategoriaByIdAsync(categoriaId);
             
             if (categoria == null) return false;
+            if(categoria.RestauranteId != restauranteId) return false;
             
-            if(categoria.RestauranteId != restauranteId)
-            {
-                return false;
-            }
             categoria.Nombre = dto.Nombre;
             return await _unitOfWork.SaveChangesAsync();
         }
@@ -87,7 +96,6 @@ namespace MenuDigital.Api.Services.Implementations
             var categoria = await _menuRepository.GetCategoriaByIdAsync(categoriaId);
             
             if (categoria == null) return false;
-            
             if (categoria.RestauranteId != restauranteId) return false;
             
             _menuRepository.DeleteCategoria(categoria);
@@ -99,28 +107,21 @@ namespace MenuDigital.Api.Services.Implementations
             var categoria = await _menuRepository.GetCategoriaByIdAsync(categoriaId);
             
             if (categoria == null) return null;
+            if (categoria.RestauranteId != restauranteId) return null;
 
-            if (categoria.RestauranteId != restauranteId)
-            {
-                return null;
-            }
             return categoria.ToDto(); 
         }
 
         public async Task<IEnumerable<CategoriaDto>> GetMisCategoriasAsync(int restauranteId)
         {
             var categorias = await _menuRepository.GetCategoriasPorRestauranteAsync(restauranteId);
-            
             return categorias.Select(c => c.ToDto());
         }
 
         public async Task<ProductoDto?> CreateProductoAsync(ProductoCreateDto dto, int restauranteId)
         {
             var categoria = await GetCategoriaSimpleAsync(dto.CategoriaId, restauranteId);
-            if (categoria == null)
-            {
-                return null; 
-            }
+            if (categoria == null) return null; 
 
             var producto = new Producto
             {
@@ -137,25 +138,19 @@ namespace MenuDigital.Api.Services.Implementations
             _menuRepository.AddProducto(producto);
             await _unitOfWork.SaveChangesAsync();
             
-            return producto.ToDto(); 
+            return producto.ToDto(esHappyHourActivo: false); 
         }
 
         public async Task<bool> UpdateProductoAsync(int productoId, ProductoUpdateDto dto, int restauranteId)
         {
             var categoriaDestino = await _menuRepository.GetCategoriaByIdAsync(dto.CategoriaId);
-            if (categoriaDestino == null || categoriaDestino.RestauranteId != restauranteId)
-            {
-                return false; 
-            }
+            if (categoriaDestino == null || categoriaDestino.RestauranteId != restauranteId) return false; 
             
             var producto = await _menuRepository.GetProductoByIdAsync(productoId);
             if (producto == null) return false;
 
             var categoriaActual = await _menuRepository.GetCategoriaByIdAsync(producto.CategoriaId);
-            if (categoriaActual == null || categoriaActual.RestauranteId != restauranteId)
-            {
-                return false; 
-            }
+            if (categoriaActual == null || categoriaActual.RestauranteId != restauranteId) return false; 
             
             producto.Nombre = dto.Nombre;
             producto.Descripcion = dto.Descripcion;
@@ -176,10 +171,7 @@ namespace MenuDigital.Api.Services.Implementations
             if (producto == null) return false;
 
             var categoriaActual = await _menuRepository.GetCategoriaByIdAsync(producto.CategoriaId);
-            if (categoriaActual == null || categoriaActual.RestauranteId != restauranteId)
-            {
-                return false; 
-            }
+            if (categoriaActual == null || categoriaActual.RestauranteId != restauranteId) return false; 
 
             _menuRepository.DeleteProducto(producto);
             return await _unitOfWork.SaveChangesAsync();
@@ -191,20 +183,15 @@ namespace MenuDigital.Api.Services.Implementations
             if (producto == null) return null;
 
             var categoria = await _menuRepository.GetCategoriaByIdAsync(producto.CategoriaId);
-            if (categoria == null || categoria.RestauranteId != restauranteId)
-            {
-                return null; 
-            }
+            if (categoria == null || categoria.RestauranteId != restauranteId) return null; 
+            
             return producto; 
         }
 
         public async Task<bool> SetDescuentoAsync(int productoId, ProductoDescuentoDto dto, int restauranteId)
         {
             var producto = await GetProductoSiEsDueño(productoId, restauranteId);
-            if (producto == null)
-            {
-                return false; 
-            }
+            if (producto == null) return false; 
 
             producto.TieneDescuento = dto.TieneDescuento;
             producto.PorcentajeDescuento = dto.TieneDescuento ? dto.PorcentajeDescuento : 0; 
@@ -215,10 +202,7 @@ namespace MenuDigital.Api.Services.Implementations
         public async Task<bool> SetHappyHourAsync(int productoId, ProductoHappyHourDto dto, int restauranteId)
         {
             var producto = await GetProductoSiEsDueño(productoId, restauranteId);
-            if (producto == null)
-            {
-                return false; 
-            }
+            if (producto == null) return false; 
 
             producto.TieneHappyHour = dto.TieneHappyHour;
             return await _unitOfWork.SaveChangesAsync();
@@ -227,7 +211,30 @@ namespace MenuDigital.Api.Services.Implementations
         public async Task<IEnumerable<ProductoDto>> GetMisProductosAsync(int restauranteId)
         {
             var productos = await _menuRepository.GetProductosPorRestauranteAsync(restauranteId);
-            return productos.Select(p => p.ToDto());
+            
+            bool esHappyHour = await VerificarSiEsHappyHour(restauranteId);
+
+            return productos.Select(p => p.ToDto(esHappyHour));
+        }
+        
+        public async Task<ProductoDto?> GetProductoPorIdAsync(int productoId, int restauranteId)
+        {
+            var producto = await GetProductoSiEsDueño(productoId, restauranteId);
+    
+            if (producto == null) return null;
+
+            return producto.ToDto(false); 
+        }
+        
+        public async Task<bool> UpdateHappyHourHorarioAsync(int restauranteId, int inicio, int fin)
+        {
+            var restaurante = await _restauranteRepository.GetRestauranteByIdAsync(restauranteId);
+            if (restaurante == null) return false;
+
+            restaurante.HappyHourInicio = inicio;
+            restaurante.HappyHourFin = fin;
+
+            return await _unitOfWork.SaveChangesAsync();
         }
     }
 }

@@ -14,16 +14,9 @@ public static class MappingExtensions
         };
     }
 
-    public static ProductoDto ToDto(this Producto producto)
+    public static ProductoDto ToDto(this Producto producto, bool esHappyHourActivo = false)
     {
-        
-        int horaInicio = 17; 
-        int horaFin = 21;
-    
-        var horaActual = DateTime.Now.Hour;
-    
-        bool esHorarioHappyHour = horaActual >= horaInicio && horaActual < horaFin;
-        bool aplicarHappyHour = producto.TieneHappyHour && esHorarioHappyHour;
+        bool aplicarHappyHour = producto.TieneHappyHour && esHappyHourActivo;
 
         decimal precioFinal = producto.Precio;
         decimal? precioOriginal = null;
@@ -31,7 +24,7 @@ public static class MappingExtensions
         if (aplicarHappyHour)
         {
             precioOriginal = producto.Precio;
-            precioFinal = producto.Precio * 0.5m; 
+            precioFinal = producto.Precio * 0.5m; // 50% OFF
         }
         else if (producto.TieneDescuento)
         {
@@ -45,7 +38,7 @@ public static class MappingExtensions
             Nombre = producto.Nombre,
             Descripcion = producto.Descripcion,
         
-            Precio = precioFinal, 
+            Precio = Math.Round(precioFinal, 2), 
             PrecioOriginal = precioOriginal,
         
             EstaDestacado = producto.EstaDestacado,
@@ -54,6 +47,7 @@ public static class MappingExtensions
             TieneHappyHour = producto.TieneHappyHour,
             CategoriaId = producto.CategoriaId,
             ImagenUrl = producto.ImagenUrl,
+            
             EnHappyHourAhora = aplicarHappyHour 
         };
     }

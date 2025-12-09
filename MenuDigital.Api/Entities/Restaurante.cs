@@ -23,5 +23,9 @@ public class Restaurante
     
     public int HoraCierre { get; set; } = 23;
     
+    public int HappyHourInicio { get; set; } = 17; 
+    
+    public int HappyHourFin { get; set; } = 23;
+    
     public ICollection<Categoria> Categorias { get; set; } = new List<Categoria>();
 }

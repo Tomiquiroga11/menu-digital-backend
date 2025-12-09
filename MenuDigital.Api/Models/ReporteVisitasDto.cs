@@ -13,4 +13,8 @@ public class ReporteVisitasDto
     public int HoraCierre { get; set; }
     
     public string Telefono { get; set; } = string.Empty;
+    
+    public int HappyHourInicio { get; set; }
+    
+    public int HappyHourFin { get; set; }
 }

@@ -24,5 +24,9 @@ namespace MenuDigital.Api.Services.Interfaces
         Task<IEnumerable<CategoriaDto>> GetMisCategoriasAsync(int restauranteId);
         
         Task<IEnumerable<ProductoDto>> GetMisProductosAsync(int restauranteId);
+        
+        Task<ProductoDto?> GetProductoPorIdAsync(int productoId, int restauranteId);
+        
+        Task<bool> UpdateHappyHourHorarioAsync(int restauranteId, int inicio, int fin);
     }
 }

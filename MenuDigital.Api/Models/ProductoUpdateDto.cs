@@ -7,7 +7,7 @@ public class ProductoUpdateDto
     [Required]
     [MaxLength(100)]
     public string Nombre { get; set; } = string.Empty;
-    public string Descripcion { get; set; } = string.Empty;
+    public string? Descripcion { get; set; } 
     [Required]
     [Range(0.01, 1000000)]
     public decimal Precio { get; set; }

@@ -90,6 +90,12 @@ namespace MenuDigital.Api.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("HappyHourFin")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("HappyHourInicio")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("HoraApertura")
                         .HasColumnType("INTEGER");
 

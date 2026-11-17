@@ -14,6 +14,8 @@ builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
 builder.Services.AddScoped<IRestaurantService, RestaurantService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IProductService, ProductService>();
 // Add services to the container.
 
 builder.Services.AddControllers();

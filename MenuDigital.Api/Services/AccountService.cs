@@ -77,6 +77,67 @@ public class AccountService : IAccountService
         return BuildResponse(user, restaurant?.Id);
     }
 
+    public async Task<AccountDto?> GetAccountAsync(int userId)
+    {
+        var user = await _userRepository.GetByIdAsync(userId);
+        var restaurant = await _restaurantRepository.GetByUserIdAsync(userId);
+        if (user == null || restaurant == null)
+        {
+            return null;
+        }
+
+        return BuildAccountDto(user, restaurant);
+    }
+
+    public async Task<AccountDto?> UpdateAccountAsync(int userId, UpdateAccountRequestDto dto)
+    {
+        var user = await _userRepository.GetByIdAsync(userId);
+        var restaurant = await _restaurantRepository.GetByUserIdAsync(userId);
+        if (user == null || restaurant == null)
+        {
+            return null;
+        }
+
+        user.Name = dto.Name;
+        restaurant.Name = dto.RestaurantName;
+        restaurant.Address = dto.Address;
+        restaurant.Phone = dto.Phone;
+        restaurant.OpeningTime = dto.OpeningTime;
+        restaurant.ClosingTime = dto.ClosingTime;
+
+        await _userRepository.UpdateAsync(user);
+        await _restaurantRepository.UpdateAsync(restaurant);
+        return BuildAccountDto(user, restaurant);
+    }
+
+    public async Task<bool> DeleteAccountAsync(int userId)
+    {
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user == null)
+        {
+            return false;
+        }
+
+        await _userRepository.DeleteAsync(user);
+        return true;
+    }
+
+    private static AccountDto BuildAccountDto(User user, Restaurant restaurant)
+    {
+        return new AccountDto
+        {
+            UserId = user.Id,
+        Name = user.Name,
+        Email = user.Email,
+        RestaurantId = restaurant.Id,
+        RestaurantName = restaurant.Name,
+        Address = restaurant.Address,
+        Phone = restaurant.Phone,
+        OpeningTime = restaurant.OpeningTime,
+        ClosingTime = restaurant.ClosingTime
+        };
+    }
+
     private AuthResponseDto BuildResponse(User user, int? restaurantId)
     {
         return new AuthResponseDto

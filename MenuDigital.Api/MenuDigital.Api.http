@@ -1,6 +1,179 @@
-@MenuDigital.Api_HostAddress = http://localhost:5087
+@baseUrl = http://localhost:5087
+@token = {{login.response.body.$.token}}
+@token2 = {{login2.response.body.$.token}}
 
-GET {{MenuDigital.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+### ============ FLUJO DEL DUEÑO ============
 
-###
+### 1. Lista de restaurantes (vacía al principio)
+GET {{baseUrl}}/api/restaurants
+
+### 2. Registro de dueño
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Tomás",
+  "email": "tomas@test.com",
+  "password": "ClaveSegura123",
+  "restaurantName": "La Parrilla de Tomás",
+  "address": "Av. Colón 1234, Córdoba",
+  "phone": "5493511234567",
+  "openingTime": "12:00:00",
+  "closingTime": "23:30:00"
+}
+
+### 3. Login
+# @name login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "tomas@test.com",
+  "password": "ClaveSegura123"
+}
+
+### 4. Ver mi cuenta
+GET {{baseUrl}}/api/account
+Authorization: Bearer {{token}}
+
+### 5. Crear categoría
+POST {{baseUrl}}/api/categories
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Hamburguesas"
+}
+
+### 6. Crear producto
+POST {{baseUrl}}/api/products
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Hamburguesa completa",
+  "description": "Doble carne, cheddar, panceta y huevo",
+  "price": 12500,
+  "imageUrl": null,
+  "isFeatured": true,
+  "categoryId": 1
+}
+
+### 7. Poner 20% de descuento
+PATCH {{baseUrl}}/api/products/1/discount
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "discountPercentage": 20
+}
+
+### 8. Activar happy hour
+PATCH {{baseUrl}}/api/products/1/happy-hour
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "isHappyHour": true
+}
+
+### ============ FLUJO DEL INVITADO ============
+
+### 9. Lista de restaurantes (ahora con uno)
+GET {{baseUrl}}/api/restaurants
+
+### 10. Menú completo
+GET {{baseUrl}}/api/restaurants/1/menu
+
+### 11. Productos de una categoría
+GET {{baseUrl}}/api/categories/1/products
+
+### 12. Detalle de un producto
+GET {{baseUrl}}/api/products/1
+
+### ============ PRUEBAS DE ERRORES ============
+
+### 13. Sin token (espera 401)
+POST {{baseUrl}}/api/categories
+Content-Type: application/json
+
+{
+  "name": "Bebidas"
+}
+
+### 14. Descuento inválido (espera 400)
+PATCH {{baseUrl}}/api/products/1/discount
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "discountPercentage": 150
+}
+
+### 15. Login con contraseña incorrecta (espera 401)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "tomas@test.com",
+  "password": "otraClave"
+}
+
+### 16. Registro con email repetido, en mayúsculas (espera 409)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Otro",
+  "email": "TOMAS@test.com",
+  "password": "ClaveSegura123",
+  "restaurantName": "Otro local",
+  "address": "Calle 123",
+  "phone": "5493519999999",
+  "openingTime": "09:00:00",
+  "closingTime": "18:00:00"
+}
+
+### ============ SEGURIDAD ENTRE DUEÑOS ============
+
+### 17. Registrar un segundo dueño
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Ana",
+  "email": "ana@test.com",
+  "password": "ClaveSegura123",
+  "restaurantName": "Café de Ana",
+  "address": "Bv. San Juan 500, Córdoba",
+  "phone": "5493517654321",
+  "openingTime": "08:00:00",
+  "closingTime": "20:00:00"
+}
+
+### 18. Login del segundo dueño
+# @name login2
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "ana@test.com",
+  "password": "ClaveSegura123"
+}
+
+### 19. Ana intenta borrar el producto de Tomás (espera 404)
+DELETE {{baseUrl}}/api/products/1
+Authorization: Bearer {{token2}}
+
+### 20. Ana intenta crear un producto en la categoría de Tomás (espera 400)
+POST {{baseUrl}}/api/products
+Authorization: Bearer {{token2}}
+Content-Type: application/json
+
+{
+  "name": "Producto intruso",
+  "description": "",
+  "price": 100,
+  "isFeatured": false,
+  "categoryId": 1
+}

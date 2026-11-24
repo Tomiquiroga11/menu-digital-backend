@@ -42,6 +42,31 @@ public class AccountController : ControllerBase
         return Ok(account);
     }
 
+    [HttpPut("password")]
+    public async Task<IActionResult> ChangePassword(ChangePasswordRequestDto dto)
+    {
+        var result = await _accountService.ChangePasswordAsync(User.GetUserId(), dto);
+        return ToActionResult(result);
+    }
+
+    [HttpPut("email")]
+    public async Task<IActionResult> ChangeEmail(ChangeEmailRequestDto dto)
+    {
+        var result = await _accountService.ChangeEmailAsync(User.GetUserId(), dto);
+        return ToActionResult(result);
+    }
+
+    private IActionResult ToActionResult(AccountUpdateResult result)
+    {
+        return result switch
+        {
+            AccountUpdateResult.Success => NoContent(),
+            AccountUpdateResult.InvalidPassword => BadRequest(new { message = "La contraseña actual es incorrecta." }),
+            AccountUpdateResult.EmailTaken => Conflict(new { message = "Ya existe una cuenta con ese email." }),
+            _ => NotFound()
+        };
+    }
+
     [HttpDelete]
     public async Task<IActionResult> Delete()
     {

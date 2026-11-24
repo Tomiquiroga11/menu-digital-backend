@@ -9,4 +9,6 @@ public interface IAccountService
     Task<AccountDto?> GetAccountAsync(int userId);
     Task<AccountDto?> UpdateAccountAsync(int userId, UpdateAccountRequestDto dto);
     Task<bool> DeleteAccountAsync(int userId);
+    Task<AccountUpdateResult> ChangePasswordAsync(int userId, ChangePasswordRequestDto dto);
+    Task<AccountUpdateResult> ChangeEmailAsync(int userId, ChangeEmailRequestDto dto);
 }

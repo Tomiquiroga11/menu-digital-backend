@@ -138,6 +138,53 @@ public class AccountService : IAccountService
         };
     }
 
+    public async Task<AccountUpdateResult> ChangePasswordAsync(int userId, ChangePasswordRequestDto dto)
+    {
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user == null)
+        {
+            return AccountUpdateResult.NotFound;
+        }
+
+        if (!IsPasswordCorrect(user, dto.CurrentPassword))
+        {
+            return AccountUpdateResult.InvalidPassword;
+        }
+
+        user.PasswordHash = _passwordHasher.HashPassword(user, dto.NewPassword);
+        await _userRepository.UpdateAsync(user);
+        return AccountUpdateResult.Success;
+    }
+
+    public async Task<AccountUpdateResult> ChangeEmailAsync(int userId, ChangeEmailRequestDto dto)
+    {
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user == null)
+        {
+            return AccountUpdateResult.NotFound;
+        }
+
+        if (!IsPasswordCorrect(user, dto.CurrentPassword))
+        {
+            return AccountUpdateResult.InvalidPassword;
+        }
+
+        var newEmail = NormalizeEmail(dto.NewEmail);
+        if (newEmail != user.Email && await _userRepository.EmailExistsAsync(newEmail))
+        {
+            return AccountUpdateResult.EmailTaken;
+        }
+
+        user.Email = newEmail;
+        await _userRepository.UpdateAsync(user);
+        return AccountUpdateResult.Success;
+    }
+
+    private bool IsPasswordCorrect(User user, string password)
+    {
+        var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
+        return result != PasswordVerificationResult.Failed;
+    }
     private AuthResponseDto BuildResponse(User user, int? restaurantId)
     {
         return new AuthResponseDto
